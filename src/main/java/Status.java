@@ -24,7 +24,7 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.*;
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
 import com.nimbusds.jose.jwk.RSAKey;
-import org.apache.commons.codec.binary.Base64;
+import org.bouncycastle.util.encoders.Base64;
 
 public class Status {
 
@@ -47,23 +47,20 @@ public class Status {
         RSAKey rsaJWE = RSAKey.parse(jwePubKey);
         RSAPublicKey jweRsaPubKey = rsaJWE.toRSAPublicKey();
 
-
-        File file = new File("/Users/mihirvmarathe/IdeaProjects/2c2p/demo2/demo2.pem");
+        File file = new File("/Users/mihirvmarathe/IdeaProjects/2c2p/demo2/p.key");
         String key = Files.readString(file.toPath(), Charset.defaultCharset());
 
         String privateKeyPEM = key
-            .replace("-----BEGIN PRIVATE KEY-----", "")
-            .replaceAll(System.lineSeparator(), "")
-            .replace("-----END PRIVATE KEY-----", "");
+            .replaceAll(System.lineSeparator(), "");
 
-        byte[] encoded = Base64.decodeBase64(privateKeyPEM);
+        byte[] encoded =  Base64.decode(privateKeyPEM);
+            //Base64.decodeBase64(privateKeyPEM);
 
 
         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(encoded);
         KeyFactory kf = KeyFactory.getInstance("RSA");
         RSAPrivateKey jwsPrivateKey = (RSAPrivateKey) kf
             .generatePrivate(spec);
-
 
         KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
         keyGenerator.init(enc.cekBitLength());
