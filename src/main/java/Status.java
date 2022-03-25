@@ -1,5 +1,4 @@
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,7 +10,7 @@ import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Base64;
+
 import javax.net.ssl.HttpsURLConnection;
 import java.security.KeyFactory;
 import java.security.Security;
@@ -25,11 +24,15 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.*;
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
 import com.nimbusds.jose.jwk.RSAKey;
+import org.apache.commons.codec.binary.Base64;
 
 public class Status {
 
     public static void main(String[] args)
         throws IOException, CertificateException, JOSEException, NoSuchAlgorithmException, InvalidKeySpecException {
+
+        Security.addProvider(BouncyCastleProviderSingleton.getInstance());
+        Security.setProperty("crypto.policy", "unlimited");
 
         String paymentRequest = "<PaymentProcessRequest><version>3.8</version><timeStamp>151020142801</timeStamp><merchantID>JT01</merchantID><invoiceNo>1mihir1523953661</invoiceNo><processType>I</processType></PaymentProcessRequest>";
 
@@ -48,7 +51,12 @@ public class Status {
         File file = new File("/Users/mihirvmarathe/IdeaProjects/2c2p/demo2/demo2.pem");
         String key = Files.readString(file.toPath(), Charset.defaultCharset());
 
-        byte[] encoded = Base64.getDecoder().decode(key);
+        String privateKeyPEM = key
+            .replace("-----BEGIN PRIVATE KEY-----", "")
+            .replaceAll(System.lineSeparator(), "")
+            .replace("-----END PRIVATE KEY-----", "");
+
+        byte[] encoded = Base64.decodeBase64(privateKeyPEM);
 
 
         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(encoded);
@@ -65,7 +73,7 @@ public class Status {
         jwe.encrypt(new RSAEncrypter(jweRsaPubKey, cek));
         String jwePayload = jwe.serialize();
 
-        Security.addProvider(BouncyCastleProviderSingleton.getInstance());
+
         RSASSASigner signer = new RSASSASigner(jwsPrivateKey);
         JWSHeader header = new JWSHeader(JWSAlgorithm.PS256);
         JWSObject jwsObject = new JWSObject(header, new Payload(jwePayload));
