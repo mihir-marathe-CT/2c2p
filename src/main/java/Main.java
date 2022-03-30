@@ -1,28 +1,33 @@
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
+import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.auth0.jwt.interfaces.JWTVerifier;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.Map;
 import javax.net.ssl.HttpsURLConnection;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 public class Main {
 
     public static void main(String[] args) {
 
         String token="";
-        String secretKey = "ECC4E54DBA738857B84A7EBC6B5DC7187B8DA68750E88AB53AAA41F548D6F2D9";
+        String secretKey = "33949FCDF8791E4DC33E186BA30C93232870F093CCC2D4CCC4CE215B819B6550";
 
         HashMap<String, Object> payload = new HashMap<>();
         
-        payload.put("merchantID","JT01");
-        payload.put("invoiceNo","1mihir1523953661");
+        payload.put("merchantID","702702000001875");
+        payload.put("invoiceNo","3mihir1523953661");
         payload.put("description","item 1");
         payload.put("amount",1000.00);
-        payload.put("cuencyCode","SGD");
+        payload.put("currencyCode","SGD");
 
         try {
             Algorithm algorithm = Algorithm.HMAC256(secretKey);
@@ -63,6 +68,20 @@ public class Main {
                 response.append(inputLine);
             }
             in.close();
+
+            JSONParser parser = new JSONParser();
+            JSONObject responseJSON = (JSONObject) parser.parse(response.toString());
+            String responseToken = responseJSON.get("payload").toString();
+
+            Algorithm algorithm = Algorithm.HMAC256(secretKey);
+
+            JWTVerifier verifier = JWT.require(algorithm).build();
+            verifier.verify(responseToken);   //verify signature
+            DecodedJWT jwt = JWT.decode(responseToken); //decode encoded payload
+            Map<String, Claim> responseData = jwt.getClaims();
+            String paymentToken = responseData.get("paymentToken").toString();
+
+            //paymentToken -> {JsonNodeClaim@3050} ""kSAops9Zwhos8hSTSeLTUZBQPG0it8C9onkziF7YwrTaN6Ojrs3Bq86PDH0CvKY4j+pF55ffrKl8IKpWqpx923Rqgmpa1b5zaSsrS3qvJfpPA8iEhgZVthsmiSw+Y9uv""
         }catch(Exception e){
             e.printStackTrace();
         }

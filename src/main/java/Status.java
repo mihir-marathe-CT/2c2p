@@ -1,7 +1,9 @@
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -25,6 +27,7 @@ import com.nimbusds.jose.crypto.*;
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
 import com.nimbusds.jose.jwk.RSAKey;
 import org.bouncycastle.util.encoders.Base64;
+import org.json.simple.JSONObject;
 
 public class Status {
 
@@ -34,7 +37,8 @@ public class Status {
         Security.addProvider(BouncyCastleProviderSingleton.getInstance());
         Security.setProperty("crypto.policy", "unlimited");
 
-        String paymentRequest = "<PaymentProcessRequest><version>3.8</version><timeStamp>151020142801</timeStamp><merchantID>JT01</merchantID><invoiceNo>1mihir1523953661</invoiceNo><processType>I</processType></PaymentProcessRequest>";
+        String paymentRequest = "<PaymentProcessRequest><version>3.8</version><merchantID>702702000001875</merchantID>"
+            + "<processType>S</processType><invoiceNo>3mihir1523953661</invoiceNo></PaymentProcessRequest>";
 
         FileInputStream is  = new FileInputStream("/Users/mihirvmarathe/IdeaProjects/2c2p/demo2/demo2.crt"); ////2c2p public cert key
 
@@ -47,11 +51,21 @@ public class Status {
         RSAKey rsaJWE = RSAKey.parse(jwePubKey);
         RSAPublicKey jweRsaPubKey = rsaJWE.toRSAPublicKey();
 
-        File file = new File("/Users/mihirvmarathe/IdeaProjects/2c2p/demo2/p.key");
+        File file = new File("/Users/mihirvmarathe/IdeaProjects/2c2p/self/decrypted_private.key");
+//        FileInputStream fis = new FileInputStream(file);
+//        DataInputStream dis = new DataInputStream(fis);
+//
+//        byte[] keyBytes = new byte[(int) file.length()];
+//        dis.readFully(keyBytes);
+//        dis.close();
+
+
         String key = Files.readString(file.toPath(), Charset.defaultCharset());
 
         String privateKeyPEM = key
-            .replaceAll(System.lineSeparator(), "");
+           .replace("-----BEGIN RSA PRIVATE KEY-----", "")
+            .replaceAll(System.lineSeparator(), "")
+           .replace("-----END RSA PRIVATE KEY-----", "");
 
         byte[] encoded =  Base64.decode(privateKeyPEM);
             //Base64.decodeBase64(privateKeyPEM);
@@ -62,7 +76,19 @@ public class Status {
         RSAPrivateKey jwsPrivateKey = (RSAPrivateKey) kf
             .generatePrivate(spec);
 
-        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+//        RSAPrivateKey privateKey = null;
+//        KeyFactory factory = KeyFactory.getInstance("RSA");
+//
+//        try (FileReader keyReader = new FileReader(file);
+//            PemReader pemReader = new PemReader(keyReader)) {
+//
+//            PemObject pemObject = pemReader.readPemObject();
+//            byte[] content = pemObject.getContent();
+//            PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(content);
+//            privateKey = (RSAPrivateKey) factory.generatePrivate(privKeySpec);
+//        }
+
+            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
         keyGenerator.init(enc.cekBitLength());
         SecretKey cek = keyGenerator.generateKey();
 
@@ -77,6 +103,9 @@ public class Status {
         jwsObject.sign(signer);
         String jwsPayload = jwsObject.serialize();
 
+        JSONObject requestData = new JSONObject();
+        requestData.put("payload", jwsPayload);
+
         try
         {
             String endpoint = "https://demo2.2c2p.com/2C2PFrontend/PaymentAction/2.0/action";
@@ -89,10 +118,10 @@ public class Status {
 
             con.setDoOutput(true);
             DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-            wr.writeBytes(jwsPayload);
+            wr.writeBytes(requestData.toJSONString());
             wr.flush();
             wr.close();
-
+            System.out.println(requestData.toJSONString());
 
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String inputLine;
