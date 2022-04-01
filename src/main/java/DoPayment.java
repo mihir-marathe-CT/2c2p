@@ -14,21 +14,24 @@ import javax.net.ssl.HttpsURLConnection;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-public class Main {
+public class DoPayment {
 
     public static void main(String[] args) {
 
         String token="";
         String secretKey = "33949FCDF8791E4DC33E186BA30C93232870F093CCC2D4CCC4CE215B819B6550";
 
+        //paymentToken -> {JsonNodeClaim@3064} ""kSAops9Zwhos8hSTSeLTUceUerWzzPheCUDky6x/1xLwSPRc5i8CPXWGZ2JBQxTCJR1xhgwh0hfoFNLiclLIddG3XpTJtMpXtdsKnB3AgRkARFJ5u2V8imxsDEI7cxmZ""
+        HashMap<String, Object> payment = new HashMap<>();
+        HashMap<String, Object> code = new HashMap<>();
+        code.put("channelCode","CC");
+        payment.put("code",code);
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("name","m");
+        payment.put("data",data);
         HashMap<String, Object> payload = new HashMap<>();
-        
-        payload.put("merchantID","702702000001875");
-        payload.put("invoiceNo","pay2");
-        payload.put("description","item 1");
-        payload.put("amount",1000.00);
-        payload.put("currencyCode","SGD");
-        payload.put("backendReturnUrl","https://ad054a49-7121-4613-8aab-2f741310d336.mock.pstmn.io/2c2p/shell");
+        payload.put("paymentToken","kSAops9Zwhos8hSTSeLTUceUerWzzPheCUDky6x/1xLwSPRc5i8CPXWGZ2JBQxTCJR1xhgwh0hfoFNLiclLIddG3XpTJtMpXtdsKnB3AgRkARFJ5u2V8imxsDEI7cxmZ");
+        payload.put("payment",payment);
 
         try {
             Algorithm algorithm = Algorithm.HMAC256(secretKey);
@@ -46,7 +49,7 @@ public class Main {
 
         try
         {
-            String endpoint = "https://sandbox-pgw.2c2p.com/payment/4.1/PaymentToken";
+            String endpoint = "https://sandbox-pgw.2c2p.com/payment/4.1/payment";
             URL obj = new URL(endpoint);
             HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
 
