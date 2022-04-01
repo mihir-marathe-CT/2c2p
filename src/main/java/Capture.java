@@ -1,3 +1,5 @@
+import com.nimbusds.jwt.EncryptedJWT;
+import com.nimbusds.jwt.JWTClaimsSet;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -13,6 +15,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 
+import java.text.ParseException;
+import java.util.Date;
+import java.util.UUID;
 import javax.net.ssl.HttpsURLConnection;
 import java.security.KeyFactory;
 import java.security.Security;
@@ -27,18 +32,20 @@ import com.nimbusds.jose.crypto.*;
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
 import com.nimbusds.jose.jwk.RSAKey;
 import org.bouncycastle.util.encoders.Base64;
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemReader;
 import org.json.simple.JSONObject;
 
-public class Status {
+public class Capture {
 
     public static void main(String[] args)
-        throws IOException, CertificateException, JOSEException, NoSuchAlgorithmException, InvalidKeySpecException {
+        throws IOException, CertificateException, JOSEException, NoSuchAlgorithmException, InvalidKeySpecException, ParseException {
 
         Security.addProvider(BouncyCastleProviderSingleton.getInstance());
         Security.setProperty("crypto.policy", "unlimited");
 
         String paymentRequest = "<PaymentProcessRequest><version>3.8</version><merchantID>702702000001875</merchantID>"
-            + "<processType>S</processType><invoiceNo>3mihir1523953661</invoiceNo></PaymentProcessRequest>";
+            + "<processType>S</processType><invoiceNo>pay1</invoiceNo></PaymentProcessRequest>";
 
         FileInputStream is  = new FileInputStream("/Users/mihirvmarathe/IdeaProjects/2c2p/demo2/demo2.crt"); ////2c2p public cert key
 
@@ -76,6 +83,7 @@ public class Status {
         RSAPrivateKey jwsPrivateKey = (RSAPrivateKey) kf
             .generatePrivate(spec);
 
+
 //        RSAPrivateKey privateKey = null;
 //        KeyFactory factory = KeyFactory.getInstance("RSA");
 //
@@ -98,8 +106,8 @@ public class Status {
 
 
         RSASSASigner signer = new RSASSASigner(jwsPrivateKey);
-        JWSHeader header = new JWSHeader(JWSAlgorithm.PS256);
-        JWSObject jwsObject = new JWSObject(header, new Payload(jwePayload));
+        JWSHeader headerc = new JWSHeader(JWSAlgorithm.PS256);
+        JWSObject jwsObject = new JWSObject(headerc, new Payload(jwePayload));
         jwsObject.sign(signer);
         String jwsPayload = jwsObject.serialize();
 

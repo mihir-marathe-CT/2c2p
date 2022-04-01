@@ -24,10 +24,11 @@ public class Main {
         HashMap<String, Object> payload = new HashMap<>();
         
         payload.put("merchantID","702702000001875");
-        payload.put("invoiceNo","3mihir1523953661");
+        payload.put("invoiceNo","pay1");
         payload.put("description","item 1");
         payload.put("amount",1000.00);
         payload.put("currencyCode","SGD");
+        payload.put("backendReturnUrl","https://ad054a49-7121-4613-8aab-2f741310d336.mock.pstmn.io/2c2p/shell");
 
         try {
             Algorithm algorithm = Algorithm.HMAC256(secretKey);
@@ -79,9 +80,14 @@ public class Main {
             verifier.verify(responseToken);   //verify signature
             DecodedJWT jwt = JWT.decode(responseToken); //decode encoded payload
             Map<String, Claim> responseData = jwt.getClaims();
-            String paymentToken = responseData.get("paymentToken").toString();
+            String paymentToken = responseData.get("paymentToken").asString();
 
             //paymentToken -> {JsonNodeClaim@3050} ""kSAops9Zwhos8hSTSeLTUZBQPG0it8C9onkziF7YwrTaN6Ojrs3Bq86PDH0CvKY4j+pF55ffrKl8IKpWqpx923Rqgmpa1b5zaSsrS3qvJfpPA8iEhgZVthsmiSw+Y9uv""
+
+            HashMap<String, Object> capture = new HashMap<>();
+
+            capture.put("paymentToken",paymentToken);
+
         }catch(Exception e){
             e.printStackTrace();
         }
